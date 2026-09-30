@@ -1,5 +1,7 @@
 <div align="center">
 
+**English · [简体中文](README.zh-CN.md)**
+
 <img src="assets/banner.png" width="100%" alt="ZephyrAki — silver-haired anime character, pale blue sky, and Turn curiosity into code." />
 
 ### Hi, I'm Zephyr 👋
