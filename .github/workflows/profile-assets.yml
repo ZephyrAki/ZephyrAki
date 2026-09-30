@@ -1,0 +1,48 @@
+name: Refresh profile artwork
+
+on:
+  schedule:
+    - cron: '17 1 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/profile-assets.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: profile-artwork
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Test and render public statistics
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_*.py'
+          python3 scripts/update_stats.py
+      - name: Render contribution snake
+        uses: Platane/snk/svg-only@d8f6715049803e982ee5ff501b6b9b7d5deeb09b # v3
+        with:
+          github_user_name: ZephyrAki
+          outputs: |
+            assets/snake-light.svg?color_snake=%238ca9e8&color_dots=%23edf2fa,%23cbdcf5,%23a7c2ee,%238ca9e8,%236b8ac5
+            assets/snake-dark.svg?palette=github-dark&color_snake=%23b5ccff&color_dots=%23192535,%232d4260,%234b6890,%237d9ed5,%23b5ccff
+      - name: Publish updated artwork
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/stats-*.svg assets/code-*.svg assets/snake-*.svg
+          if ! git diff --cached --quiet; then
+            git commit -m 'Refresh public profile statistics and contribution artwork'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
